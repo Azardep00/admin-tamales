@@ -1,16 +1,54 @@
-# React + Vite
+# Panel de operación — Tamales y Lechona
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Frontend administrativo del backend Spring Boot. Cubre todos los endpoints
+expuestos por la API.
 
-Currently, two official plugins are available:
+## Instalación
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+```bash
+npm install
+npm install react-router-dom
+cp .env.example .env     # en PowerShell: copy .env.example .env
+npm run dev
+```
 
-## React Compiler
+## Requisito en el backend
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+`CorsConfig.java` debe permitir PATCH, o el cambio de estado de un pedido
+y el cambio de contraseña fallan en el preflight:
 
-## Expanding the ESLint configuration
+```java
+.allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
+```
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Qué hay en cada sección
+
+| Sección     | Endpoints que consume                                                     |
+|-------------|---------------------------------------------------------------------------|
+| Acceso      | `POST /api/usuarios/login` (solo entran usuarios de tipo Empleado)        |
+| Resumen     | pedidos, productos y movimientos; además `GET /api/integracion/clima`     |
+| Pedidos     | listar, filtrar por estado o cliente, detalle, crear, avanzar, cancelar   |
+| Productos   | listar, buscar, crear tamal o lechona, editar, retirar                    |
+| Inventario  | listar y filtrar movimientos, registrar entrada, salida y reversión       |
+| Proveedores | listar, buscar, registrar, editar, desactivar                             |
+| Personas    | clientes y empleados: listar, crear, editar, cambiar contraseña, desactivar |
+
+## Estructura
+
+```
+src/
+  api/          client.js (fetch + errores) e index.js (un método por endpoint)
+  lib/          formato de moneda y fechas, hooks de carga
+  context/      sesión y avisos
+  components/   layout y piezas de interfaz reutilizables
+  pages/        una por sección
+  styles.css    sistema visual completo
+```
+
+## Límites que vienen de la API
+
+- No existe endpoint para reactivar un producto, proveedor o usuario dado de baja.
+- `PUT /api/productos/{id}` ignora stock y estado: el stock se mueve por inventario.
+- El backend acepta un solo filtro a la vez en pedidos y movimientos.
+- El login no devuelve token; la sesión se guarda en el navegador y el filtro
+  por rol es del lado del cliente.
