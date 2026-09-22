@@ -16,9 +16,6 @@ function queryString(params) {
   return entradas.length ? `?${new URLSearchParams(entradas)}` : '';
 }
 
-// Mismo lugar donde AuthContext guarda la sesión. La leemos directo de
-// localStorage aquí (en vez de importar el contexto) para no crear una
-// dependencia circular entre api/ y context/.
 function tokenActual() {
   try {
     const guardado = localStorage.getItem(LLAVE_SESION);
@@ -28,11 +25,16 @@ function tokenActual() {
   }
 }
 
-/**
- * Envoltura única sobre fetch. El backend responde los errores como
- * { "mensaje": "..." } (GlobalExceptionHandler.ErrorResponse), así que
- * traducimos eso a un ApiError con el texto que el usuario debe leer.
- */
+// Si el 401 no viene del propio intento de login, el token dejó de ser
+// válido a mitad de la sesión (expiró). Limpiamos la sesión guardada y
+// forzamos una recarga a /login, para que AuthContext arranque desde cero.
+function manejarSesionExpirada() {
+  localStorage.removeItem(LLAVE_SESION);
+  if (window.location.pathname !== '/login') {
+    window.location.assign('/login');
+  }
+}
+
 export async function api(ruta, { method = 'GET', body, params } = {}) {
   const token = tokenActual();
 
@@ -64,6 +66,11 @@ export async function api(ruta, { method = 'GET', body, params } = {}) {
   }
 
   if (!res.ok) {
+    const esIntentoDeLogin = ruta.includes('/usuarios/login');
+    if (res.status === 401 && !esIntentoDeLogin) {
+      manejarSesionExpirada();
+    }
+
     const mensaje =
       (datos && typeof datos === 'object' && datos.mensaje) ||
       (typeof datos === 'string' && datos) ||
