@@ -32,6 +32,12 @@ export default function Pedidos() {
     [filtroEstado, filtroCliente]
   );
 
+  useEffect(() => {
+    const onPedidoNuevo = () => recargar();
+    window.addEventListener('pedidos:nuevo', onPedidoNuevo);
+    return () => window.removeEventListener('pedidos:nuevo', onPedidoNuevo);
+  }, [recargar]);
+
   const { datos: listaUsuarios } = useAsync(() => apiUsuarios.listar(), []);
   const clientes = (listaUsuarios ?? []).filter((u) => u.tipoUsuario === 'Cliente' && u.estado);
 
