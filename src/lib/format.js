@@ -15,6 +15,17 @@ function aDate(valor) {
     const [a, m, d, h = 0, min = 0, s = 0] = valor;
     return new Date(a, m - 1, d, h, min, s);
   }
+  if (typeof valor === 'string') {
+    // El backend corre en un contenedor con zona horaria UTC, asi que las
+    // fechas que genera (sin indicar zona) en realidad representan un
+    // instante UTC, aunque el texto no traiga la "Z" que lo confirme.
+    // Si no trae zona horaria explicita, se la agregamos para que el
+    // navegador la convierta bien a la hora local de quien la ve.
+    const tieneZona = /Z$|[+-]\d{2}:?\d{2}$/.test(valor);
+    const cadena = tieneZona ? valor : `${valor}Z`;
+    const d = new Date(cadena);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
   const d = new Date(valor);
   return Number.isNaN(d.getTime()) ? null : d;
 }
