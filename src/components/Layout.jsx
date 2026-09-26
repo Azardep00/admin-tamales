@@ -71,6 +71,9 @@ function useAvisoPedidosNuevos(sesion) {
               ? '¡Llegó 1 pedido nuevo!'
               : `¡Llegaron ${nuevos} pedidos nuevos!`
           );
+          // Avisa a cualquier pantalla abierta (como Pedidos.jsx) que hay
+          // datos nuevos, para que se recargue sola sin F5.
+          window.dispatchEvent(new CustomEvent('pedidos:nuevo'));
         }
 
         ultimoConteo.current = conteoActual;
