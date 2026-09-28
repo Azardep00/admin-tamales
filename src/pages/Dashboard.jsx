@@ -1,3 +1,5 @@
+import DashboardSkeleton from '../components/DashboardSkeleton';
+import { ErrorVista, EstadoPedido } from '../components/ui';
 import { Link } from 'react-router-dom';
 import {
   Bar,
@@ -14,7 +16,7 @@ import {
 } from 'recharts';
 import { movimientos, pedidos, productos } from '../api';
 import { Encabezado } from '../components/Layout';
-import { Cargando, ErrorVista, EstadoPedido } from '../components/ui';
+
 import {
   dinero,
   fechaHora,
@@ -50,7 +52,17 @@ export default function Dashboard() {
     []
   );
 
-  if (cargando) return <Cargando texto="Armando el resumen del día" />;
+  // Solo se muestra el skeleton si aun no hay datos. Si ya habia datos y se
+  // esta recargando (boton "Actualizar" o pedido nuevo), la pantalla no se
+  // tapa otra vez con bloques grises.
+  if (cargando && !datos) {
+    return (
+      <>
+        <Encabezado titulo="Resumen" descripcion="Cómo va la operación en este momento." />
+        <DashboardSkeleton />
+      </>
+    );
+  }
   if (error) return <ErrorVista mensaje={error} onReintentar={recargar} />;
 
   const [listaPedidos, listaProductos, listaMovimientos] = datos;
