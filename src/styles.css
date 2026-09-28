@@ -1187,3 +1187,40 @@ textarea {
     font-size: 25px;
   }
 }
+
+/* ---------- Esqueletos de carga ---------- */
+
+.esqueleto {
+  display: block;
+  border-radius: 6px;
+  background: linear-gradient(
+    90deg,
+    var(--borde) 25%,
+    rgba(255, 255, 255, 0.75) 50%,
+    var(--borde) 75%
+  );
+  background-size: 200% 100%;
+  animation: esqueleto-brillo 1.4s ease-in-out infinite;
+}
+
+@keyframes esqueleto-brillo {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Quien tiene activada la opcion de "reducir movimiento" ve los bloques quietos. */
+@media (prefers-reduced-motion: reduce) {
+  .esqueleto { animation: none; }
+}
+
+.esqueleto--circulo { width: 68px; height: 68px; border-radius: 50%; }
+.esqueleto--linea { height: 13px; }
+.esqueleto--cifra { height: 23px; width: 70%; }
+.esqueleto--grafica { height: 240px; }
+
+.esqueleto-fila {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 0;
+}
