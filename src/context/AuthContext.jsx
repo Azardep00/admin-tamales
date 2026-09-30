@@ -29,8 +29,13 @@ export function AuthProvider({ children }) {
   }, []);
 
   const salir = useCallback(() => {
+    const actual = leerSesion();
     localStorage.removeItem(LLAVE);
     setSesion(null);
+
+    if (actual?.refreshToken) {
+      usuarios.logout(actual.refreshToken).catch(() => {});
+    }
   }, []);
 
   const valor = useMemo(() => ({ sesion, entrar, salir }), [sesion, entrar, salir]);
