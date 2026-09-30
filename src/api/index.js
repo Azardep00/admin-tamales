@@ -60,6 +60,10 @@ export const usuarios = {
   desactivar: (id) => api(`/usuarios/${id}`, { method: 'DELETE' }),
   login: (correo, contrasena) =>
     api('/usuarios/login', { method: 'POST', body: { correo, contrasena } }),
+  refrescar: (refreshToken) =>
+    api('/usuarios/refresh', { method: 'POST', body: { refreshToken } }),
+  logout: (refreshToken) =>
+    api('/usuarios/logout', { method: 'POST', body: { refreshToken } }),
 };
 
 export const integracion = {
