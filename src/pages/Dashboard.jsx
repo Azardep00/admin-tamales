@@ -26,6 +26,7 @@ import {
   STOCK_MINIMO,
 } from '../lib/format';
 import { useAsync } from '../lib/useAsync';
+import { exportarReporteMensual } from '../lib/exportarReporte';
 
 // Colores tomados de la paleta de styles.css, para que las graficas
 // se vean parte del mismo sistema de diseno (hoja, achiote, maiz...).
@@ -125,9 +126,17 @@ export default function Dashboard() {
         titulo="Resumen"
         descripcion="Cómo va la operación en este momento."
         acciones={
-          <button className="btn btn--contorno" onClick={recargar}>
-            Actualizar
-          </button>
+          <>
+            <button
+              className="btn btn--contorno"
+              onClick={() => exportarReporteMensual(listaPedidos, listaMovimientos)}
+            >
+              Exportar reporte
+            </button>
+            <button className="btn btn--contorno" onClick={recargar}>
+              Actualizar
+            </button>
+          </>
         }
       />
 
