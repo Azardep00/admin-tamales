@@ -6,6 +6,16 @@ import { useAuth, useToast } from '../context/contextos';
 import { fecha, legible, nombreCompleto, TIPOS_CLIENTE } from '../lib/format';
 import { useAsync } from '../lib/useAsync';
 
+// Fecha de nacimiento mas reciente permitida: hoy menos la edad minima
+// (18 anos para empleados, 12 para clientes; igual que el backend).
+function fechaMaximaNacimiento(tipo) {
+  const d = new Date()
+  d.setFullYear(d.getFullYear() - (tipo === 'Empleado' ? 18 : 12))
+  const mm = String(d.getMonth() + 1).padStart(2, '0')
+  const dd = String(d.getDate()).padStart(2, '0')
+  return `${d.getFullYear()}-${mm}-${dd}`
+}
+
 export default function Usuarios() {
   const toast = useToast();
   const { sesion } = useAuth();
@@ -301,7 +311,13 @@ function FormularioUsuario({ usuario, tipo, onCerrar, onGuardado }) {
 
         <Fila>
           <Campo etiqueta="Fecha de nacimiento">
-            <input type="date" value={form.fechaNacimiento ?? ''} onChange={cambiar('fechaNacimiento')} />
+            <input
+              type="date"
+              min="1900-01-01"
+              max={fechaMaximaNacimiento(tipo)}
+              value={form.fechaNacimiento ?? ''}
+              onChange={cambiar('fechaNacimiento')}
+            />
           </Campo>
           {esNuevo && (
             <Campo etiqueta="Contraseña" ayuda="Mínimo 6 caracteres">
