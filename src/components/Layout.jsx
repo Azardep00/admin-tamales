@@ -43,49 +43,38 @@ function Clima() {
 // --------------------------------------------------------------
 function useAvisoPedidosNuevos(sesion) {
   const toast = useToast();
-  // useRef en vez de useState: guardamos el ultimo conteo sin que
-  // el cambio provoque un re-render (no necesitamos pintar nada
-  // con este valor, solo compararlo en la siguiente vuelta).
-  const ultimoConteo = useRef(null);
+  const vistos = useRef(null); // ids de pedidos CONFIRMADO ya conocidos
 
   useEffect(() => {
     if (!sesion) return;
 
     const revisar = async () => {
       try {
-        const pendientes = await pedidos.listar({ estado: 'PENDIENTE' });
-        const conteoActual = pendientes.length;
+        const confirmados = await pedidos.listar({ estado: 'CONFIRMADO' });
+        const ids = new Set(confirmados.map((p) => p.idPedido));
 
-        // La primera vez solo guardamos el conteo de referencia,
-        // sin avisar (si no, el toast saldria apenas se abre la app
-        // aunque los pedidos ya llevaran ahi un buen rato).
-        if (ultimoConteo.current === null) {
-          ultimoConteo.current = conteoActual;
+        if (vistos.current === null) {
+          vistos.current = ids; // primera vuelta: solo referencia
           return;
         }
 
-        if (conteoActual > ultimoConteo.current) {
-          const nuevos = conteoActual - ultimoConteo.current;
+        const nuevos = [...ids].filter((id) => !vistos.current.has(id));
+        if (nuevos.length > 0) {
           toast.exito(
-            nuevos === 1
-              ? '¡Llegó 1 pedido nuevo!'
-              : `¡Llegaron ${nuevos} pedidos nuevos!`
+            nuevos.length === 1
+              ? '¡Llegó 1 pedido pagado!'
+              : `¡Llegaron ${nuevos.length} pedidos pagados!`
           );
-          // Avisa a cualquier pantalla abierta (como Pedidos.jsx) que hay
-          // datos nuevos, para que se recargue sola sin F5.
           window.dispatchEvent(new CustomEvent('pedidos:nuevo'));
         }
-
-        ultimoConteo.current = conteoActual;
-      } catch {
-        // Si falla una revision (por ejemplo el backend de Render
-        // esta "despertando"), simplemente se reintenta en la
-        // siguiente vuelta del intervalo, sin molestar al usuario.
+        vistos.current = new Set([...vistos.current, ...ids]);
+      } catch (e) {
+        console.warn('Revisión de pedidos falló:', e.message);
       }
     };
 
     revisar();
-    const intervalo = setInterval(revisar, INTERVALO_POLLING);
+    const intervalo = setInterval(revisar, 20000);
     return () => clearInterval(intervalo);
   }, [sesion, toast]);
 }
