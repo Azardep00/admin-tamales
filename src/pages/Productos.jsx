@@ -292,8 +292,8 @@ function FormularioProducto({ producto, onCerrar, onGuardado }) {
           <Campo etiqueta="Precio en pesos">
             <input
               type="number"
-              min="1"
-              step="500"
+              min="0"
+              step="1"
               value={form.precio}
               onChange={(e) => cambiar('precio')(e.target.value)}
               required
