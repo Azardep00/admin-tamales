@@ -11,6 +11,7 @@ export default function Proveedores() {
   const [incluirInactivos, setIncluirInactivos] = useState(false);
   const [editando, setEditando] = useState(null);
   const [desactivando, setDesactivando] = useState(null);
+  const [eliminando, setEliminando] = useState(null);
   const [trabajando, setTrabajando] = useState(false);
   const textoBuscado = useDebounce(busqueda);
 
@@ -28,6 +29,23 @@ export default function Proveedores() {
       recargar();
     } catch (e) {
       toast.error(e.message);
+    } finally {
+      setTrabajando(false);
+    }
+  };
+
+  // Borrado físico (DELETE). Si el proveedor ya tiene movimientos de inventario el
+  // backend responde 409 y el registro sigue en Mongo: se avisa y se ofrece desactivar.
+  const eliminar = async () => {
+    setTrabajando(true);
+    try {
+      await api.eliminar(eliminando.idProveedor);
+      toast.exito(`${eliminando.nombre} se eliminó definitivamente`);
+      setEliminando(null);
+      recargar();
+    } catch (e) {
+      toast.error(e.message);
+      if (e.status === 409) setEliminando(null);
     } finally {
       setTrabajando(false);
     }
@@ -121,6 +139,12 @@ export default function Proveedores() {
                           Desactivar
                         </button>
                       )}
+                      <button
+                        className="btn btn--pequeno btn--fantasma btn--fantasma-oscuro"
+                        onClick={() => setEliminando(p)}
+                      >
+                        Eliminar
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -138,6 +162,17 @@ export default function Proveedores() {
             setEditando(null);
             recargar();
           }}
+        />
+      )}
+
+      {eliminando && (
+        <Confirmar
+          titulo={`Eliminar ${eliminando.nombre}`}
+          mensaje="Se borra de la base de datos y no se puede deshacer. Si ya tiene entradas de inventario, el sistema no lo permite: en ese caso desactívalo."
+          textoAccion="Eliminar definitivamente"
+          trabajando={trabajando}
+          onCerrar={() => setEliminando(null)}
+          onConfirmar={eliminar}
         />
       )}
 

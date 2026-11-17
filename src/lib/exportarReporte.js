@@ -1,5 +1,5 @@
 import * as XLSX from 'xlsx';
-import { dinero, fechaHora, legible, nombreCompleto } from './format';
+import { fechaHora, idCorto, legible } from './format';
 
 // Genera y descarga un Excel con dos hojas: ventas del mes (pedidos
 // entregados) y movimientos de inventario del mes. Todo corre en el
@@ -17,8 +17,8 @@ export function exportarReporteMensual(pedidos, movimientos) {
   const pedidosDelMes = pedidos.filter((p) => p.estado === 'ENTREGADO' && dentroDelMes(p.fecha));
 
   const filasVentas = pedidosDelMes.map((p) => ({
-    'N.o pedido': p.idPedido,
-    Cliente: nombreCompleto(p.cliente),
+    'N.o pedido': idCorto(p.idPedido),
+    Cliente: p.correoCliente ?? '',
     Fecha: fechaHora(p.fecha),
     Estado: legible(p.estado),
     Total: Number(p.total ?? 0),
@@ -32,7 +32,7 @@ export function exportarReporteMensual(pedidos, movimientos) {
 
   const filasMovimientos = movimientosDelMes.map((m) => ({
     Fecha: fechaHora(m.fecha),
-    Producto: m.producto?.nombre ?? 'Producto eliminado',
+    Producto: m.nombreProducto ?? 'Producto eliminado',
     Tipo: legible(m.tipo),
     Cantidad: m.tipo === 'ENTRADA' ? m.cantidad : -m.cantidad,
     Motivo: m.motivo ?? '',

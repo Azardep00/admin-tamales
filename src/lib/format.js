@@ -9,7 +9,7 @@ export const dinero = (v) => (v === null || v === undefined ? '—' : pesos.form
 export const numero = (v) => new Intl.NumberFormat('es-CO').format(Number(v ?? 0));
 
 /** Jackson puede mandar la fecha como ISO o como arreglo; aceptamos ambas. */
-function aDate(valor) {
+export function aDate(valor) {
   if (!valor) return null;
   if (Array.isArray(valor)) {
     const [a, m, d, h = 0, min = 0, s = 0] = valor;
@@ -66,6 +66,13 @@ export const legible = (enumStr) => {
   const t = enumStr.replace(/_/g, ' ').toLowerCase();
   return t.charAt(0).toUpperCase() + t.slice(1);
 };
+
+/** Los ids de Mongo son 24 caracteres hex: en pantalla mostramos solo los últimos 6. */
+export const idCorto = (id) => (id ? String(id).slice(-6).toUpperCase() : '—');
+
+/** Comparador para ordenar por fecha, la más reciente primero (los ids ya no son numéricos). */
+export const masRecientePrimero = (a, b) =>
+  (aDate(b.fecha)?.getTime() ?? 0) - (aDate(a.fecha)?.getTime() ?? 0);
 
 export const nombreCompleto = (u) => (u ? `${u.nombre ?? ''} ${u.apellido ?? ''}`.trim() : '—');
 

@@ -40,7 +40,10 @@ export const proveedores = {
   buscar: (q) => api('/proveedores/buscar', { params: { q } }),
   registrar: (proveedor) => api('/proveedores', { method: 'POST', body: proveedor }),
   actualizar: (id, proveedor) => api(`/proveedores/${id}`, { method: 'PUT', body: proveedor }),
-  desactivar: (id) => api(`/proveedores/${id}`, { method: 'DELETE' }),
+  // Borrado lógico: el proveedor queda inactivo y se conserva el registro.
+  desactivar: (id) => api(`/proveedores/${id}/desactivar`, { method: 'PATCH' }),
+  // Borrado físico: 204 si se borra; 409 si ya tiene movimientos de inventario.
+  eliminar: (id) => api(`/proveedores/${id}`, { method: 'DELETE' }),
 };
 
 export const usuarios = {

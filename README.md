@@ -30,7 +30,7 @@ y el cambio de contraseña fallan en el preflight:
 | Pedidos     | listar, filtrar por estado o cliente, detalle, crear, avanzar, cancelar   |
 | Productos   | listar, buscar, crear tamal o lechona, editar, retirar                    |
 | Inventario  | listar y filtrar movimientos, registrar entrada, salida y reversión       |
-| Proveedores | listar, buscar, registrar, editar, desactivar                             |
+| Proveedores | listar, buscar, registrar, editar, desactivar, eliminar (borrado físico)  |
 | Personas    | clientes y empleados: listar, crear, editar, cambiar contraseña, desactivar |
 
 ## Estructura

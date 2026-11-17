@@ -3,7 +3,7 @@ import { movimientos as api, productos as apiProductos, proveedores as apiProvee
 import { Encabezado } from '../components/Layout';
 import { Campo, Cargando, ErrorVista, Modal, Selector, Vacio } from '../components/ui';
 import { useToast } from '../context/contextos';
-import { fechaHora, numero } from '../lib/format';
+import { fechaHora, idCorto, masRecientePrimero, numero } from '../lib/format';
 import { useAsync } from '../lib/useAsync';
 
 const TIPOS_REGISTRO = [
@@ -102,7 +102,7 @@ export default function Inventario() {
               setFiltroTipo('');
             }}
             opciones={(catalogo ?? []).map((p) => ({
-              valor: String(p.idProducto),
+              valor: p.idProducto,
               texto: p.nombre,
             }))}
             placeholder="Todos"
@@ -151,18 +151,18 @@ export default function Inventario() {
             </thead>
             <tbody>
               {[...lista]
-                .sort((a, b) => b.idMovimiento - a.idMovimiento)
+                .sort(masRecientePrimero)
                 .map((m) => (
                   <tr key={m.idMovimiento}>
-                    <td className="celda-id">#{m.idMovimiento}</td>
-                    <td>{m.producto?.nombre ?? 'Producto eliminado'}</td>
+                    <td className="celda-id">#{idCorto(m.idMovimiento)}</td>
+                    <td>{m.nombreProducto ?? 'Producto eliminado'}</td>
                     <td className="alinea-derecha">
                       <span className={`marca-mov marca-mov--${m.tipo.toLowerCase()}`}>
                         {m.tipo === 'ENTRADA' ? `+${m.cantidad}` : `−${m.cantidad}`}
                       </span>
                     </td>
                     <td className="celda-motivo">{m.motivo}</td>
-                    <td>{m.proveedor?.nombre ?? <span className="texto-apagado">—</span>}</td>
+                    <td>{m.nombreProveedor ?? <span className="texto-apagado">—</span>}</td>
                     <td>{fechaHora(m.fecha)}</td>
                   </tr>
                 ))}
@@ -197,20 +197,20 @@ function FormularioMovimiento({ modo, productos, proveedores, onCerrar, onGuarda
   const [motivo, setMotivo] = useState('');
   const [guardando, setGuardando] = useState(false);
 
-  const producto = productos.find((p) => String(p.idProducto) === String(idProducto));
+  const producto = productos.find((p) => p.idProducto === idProducto);
   const excede = modo === 'salida' && producto && Number(cantidad) > producto.stock;
 
   const guardar = async (e) => {
     e.preventDefault();
     setGuardando(true);
     const cuerpo = {
-      idProducto: Number(idProducto),
+      idProducto,
       cantidad: Number(cantidad),
       motivo: motivo.trim() || info.titulo,
     };
     try {
       if (modo === 'entrada') {
-        await api.registrarEntrada({ ...cuerpo, idProveedor: Number(idProveedor) });
+        await api.registrarEntrada({ ...cuerpo, idProveedor });
       } else if (modo === 'salida') {
         await api.registrarSalida(cuerpo);
       } else {
@@ -235,7 +235,7 @@ function FormularioMovimiento({ modo, productos, proveedores, onCerrar, onGuarda
           <Selector
             valor={idProducto}
             onChange={setIdProducto}
-            opciones={productos.map((p) => ({ valor: String(p.idProducto), texto: p.nombre }))}
+            opciones={productos.map((p) => ({ valor: p.idProducto, texto: p.nombre }))}
             placeholder="Elige un producto"
             required
           />
@@ -251,7 +251,7 @@ function FormularioMovimiento({ modo, productos, proveedores, onCerrar, onGuarda
             <Selector
               valor={idProveedor}
               onChange={setIdProveedor}
-              opciones={proveedores.map((p) => ({ valor: String(p.idProveedor), texto: p.nombre }))}
+              opciones={proveedores.map((p) => ({ valor: p.idProveedor, texto: p.nombre }))}
               placeholder="Elige un proveedor"
               required
             />

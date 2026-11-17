@@ -22,8 +22,9 @@ import {
   fechaHora,
   FLUJO_PEDIDO,
   haceCuanto,
+  idCorto,
   legible,
-  nombreCompleto,
+  masRecientePrimero,
   numero,
   STOCK_MINIMO,
 } from '../lib/format';
@@ -81,11 +82,11 @@ export default function Dashboard() {
     .sort((a, b) => a.stock - b.stock);
 
   const ultimosPedidos = [...listaPedidos]
-    .sort((a, b) => b.idPedido - a.idPedido)
+    .sort(masRecientePrimero)
     .slice(0, 6);
 
   const ultimosMovimientos = [...listaMovimientos]
-    .sort((a, b) => b.idMovimiento - a.idMovimiento)
+    .sort(masRecientePrimero)
     .slice(0, 6);
 
   // ---------------------------------------------------------------
@@ -123,7 +124,7 @@ export default function Dashboard() {
   listaMovimientos
     .filter((m) => m.tipo === 'SALIDA' && m.motivo?.toLowerCase().includes('venta'))
     .forEach((m) => {
-      const nombre = m.producto?.nombre ?? 'Producto eliminado';
+      const nombre = m.nombreProducto ?? 'Producto eliminado';
       ventasPorProducto[nombre] = (ventasPorProducto[nombre] ?? 0) + Number(m.cantidad ?? 0);
     });
 
@@ -302,7 +303,7 @@ export default function Dashboard() {
                     {m.tipo === 'ENTRADA' ? `+${m.cantidad}` : `−${m.cantidad}`}
                   </span>
                   <span className="lista-movimientos__texto">
-                    <strong>{m.producto?.nombre ?? 'Producto eliminado'}</strong>
+                    <strong>{m.nombreProducto ?? 'Producto eliminado'}</strong>
                     <span>{m.motivo}</span>
                   </span>
                   <span className="lista-movimientos__fecha">{haceCuanto(m.fecha)}</span>
@@ -340,8 +341,8 @@ export default function Dashboard() {
               <tbody>
                 {ultimosPedidos.map((p) => (
                   <tr key={p.idPedido}>
-                    <td className="celda-id">#{p.idPedido}</td>
-                    <td>{nombreCompleto(p.cliente)}</td>
+                    <td className="celda-id">#{idCorto(p.idPedido)}</td>
+                    <td>{p.correoCliente ?? '—'}</td>
                     <td>{fechaHora(p.fecha)}</td>
                     <td>
                       <EstadoPedido estado={p.estado} />

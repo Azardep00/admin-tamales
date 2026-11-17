@@ -7,7 +7,9 @@ import {
   dinero,
   ESTADOS_PEDIDO,
   fechaHora,
+  idCorto,
   legible,
+  masRecientePrimero,
   nombreCompleto,
   puedeCancelarse,
   SIGUIENTE_ESTADO,
@@ -40,6 +42,8 @@ export default function Pedidos() {
 
   const { datos: listaUsuarios } = useAsync(() => apiUsuarios.listar(), []);
   const clientes = (listaUsuarios ?? []).filter((u) => u.tipoUsuario === 'Cliente' && u.estado);
+  // El pedido solo trae idCliente + correoCliente: el nombre se busca en la lista de usuarios.
+  const todosPorId = new Map((listaUsuarios ?? []).map((u) => [u.idUsuario, u]));
 
   const avanzar = async (pedido) => {
     const siguiente = SIGUIENTE_ESTADO[pedido.estado];
@@ -47,7 +51,7 @@ export default function Pedidos() {
     setTrabajando(true);
     try {
       await apiPedidos.cambiarEstado(pedido.idPedido, siguiente);
-      toast.exito(`Pedido #${pedido.idPedido} pasó a ${legible(siguiente).toLowerCase()}`);
+      toast.exito(`Pedido #${idCorto(pedido.idPedido)} pasó a ${legible(siguiente).toLowerCase()}`);
       recargar();
     } catch (e) {
       toast.error(e.message);
@@ -60,7 +64,7 @@ export default function Pedidos() {
     setTrabajando(true);
     try {
       await apiPedidos.cancelar(cancelando.idPedido);
-      toast.exito(`Pedido #${cancelando.idPedido} cancelado y stock devuelto al inventario`);
+      toast.exito(`Pedido #${idCorto(cancelando.idPedido)} cancelado y stock devuelto al inventario`);
       setCancelando(null);
       recargar();
     } catch (e) {
@@ -101,7 +105,7 @@ export default function Pedidos() {
               setFiltroCliente(v);
               setFiltroEstado('');
             }}
-            opciones={clientes.map((c) => ({ valor: String(c.idUsuario), texto: nombreCompleto(c) }))}
+            opciones={clientes.map((c) => ({ valor: c.idUsuario, texto: nombreCompleto(c) }))}
             placeholder="Todos"
           />
         </Campo>
@@ -152,8 +156,9 @@ export default function Pedidos() {
             </thead>
             <tbody>
               {[...datos]
-                .sort((a, b) => b.idPedido - a.idPedido)
+                .sort(masRecientePrimero)
                 .map((p) => (
+
                   <Fragment key={p.idPedido}>
                     <tr>
                       <td className="celda-id">
@@ -162,15 +167,19 @@ export default function Pedidos() {
                           onClick={() => setExpandido(expandido === p.idPedido ? null : p.idPedido)}
                           aria-expanded={expandido === p.idPedido}
                         >
-                          #{p.idPedido}
+                          #{idCorto(p.idPedido)}
                           <span className="boton-expandir__flecha">
                             {expandido === p.idPedido ? '▾' : '▸'}
                           </span>
                         </button>
                       </td>
                       <td>
-                        <span className="celda-principal">{nombreCompleto(p.cliente)}</span>
-                        <span className="celda-secundaria">{p.cliente?.direccion ?? ''}</span>
+                        <span className="celda-principal">
+                          {todosPorId.has(p.idCliente)
+                            ? nombreCompleto(todosPorId.get(p.idCliente))
+                            : (p.correoCliente ?? '—')}
+                        </span>
+                        <span className="celda-secundaria">{p.correoCliente ?? ''}</span>
                       </td>
                       <td>{fechaHora(p.fecha)}</td>
                       <td>
@@ -219,8 +228,8 @@ export default function Pedidos() {
                               </thead>
                               <tbody>
                                 {(p.detalles ?? []).map((d) => (
-                                  <tr key={d.idDetallePedido}>
-                                    <td>{d.producto?.nombre ?? 'Producto eliminado'}</td>
+                                  <tr key={d.idProducto}>
+                                    <td>{d.nombreProducto ?? 'Producto eliminado'}</td>
                                     <td className="alinea-derecha celda-numero">{d.cantidad}</td>
                                     <td className="alinea-derecha celda-numero">
                                       {dinero(d.precioUnitario)}
@@ -258,7 +267,7 @@ export default function Pedidos() {
 
       {cancelando && (
         <Confirmar
-          titulo={`Cancelar el pedido #${cancelando.idPedido}`}
+          titulo={`Cancelar el pedido #${idCorto(cancelando.idPedido)}`}
           mensaje="El pedido queda marcado como cancelado y cada producto vuelve al inventario. El registro no se borra."
           textoAccion="Cancelar pedido"
           trabajando={trabajando}
@@ -280,7 +289,7 @@ function FormularioPedido({ clientes, onCerrar, onCreado }) {
   const [guardando, setGuardando] = useState(false);
 
   const disponibles = catalogo ?? [];
-  const buscarProducto = (id) => disponibles.find((p) => String(p.idProducto) === String(id));
+  const buscarProducto = (id) => disponibles.find((p) => p.idProducto === id);
 
   const total = lineas.reduce((suma, l) => {
     const p = buscarProducto(l.idProducto);
@@ -294,15 +303,15 @@ function FormularioPedido({ clientes, onCerrar, onCreado }) {
     e.preventDefault();
     const detalles = lineas
       .filter((l) => l.idProducto && Number(l.cantidad) > 0)
-      .map((l) => ({ idProducto: Number(l.idProducto), cantidad: Number(l.cantidad) }));
+      .map((l) => ({ idProducto: l.idProducto, cantidad: Number(l.cantidad) }));
 
     if (!idCliente) return toast.error('Elige el cliente del pedido.');
     if (detalles.length === 0) return toast.error('Agrega al menos un producto.');
 
     setGuardando(true);
     try {
-      const creado = await apiPedidos.crear(Number(idCliente), detalles);
-      toast.exito(`Pedido #${creado.idPedido} creado por ${dinero(creado.total)}`);
+      const creado = await apiPedidos.crear(idCliente, detalles);
+      toast.exito(`Pedido #${idCorto(creado.idPedido)} creado por ${dinero(creado.total)}`);
       onCreado();
     } catch (err) {
       toast.error(err.message);
@@ -327,7 +336,7 @@ function FormularioPedido({ clientes, onCerrar, onCreado }) {
               valor={idCliente}
               onChange={setIdCliente}
               opciones={clientes.map((c) => ({
-                valor: String(c.idUsuario),
+                valor: c.idUsuario,
                 texto: `${nombreCompleto(c)} — ${c.correo}`,
               }))}
               placeholder="Selecciona un cliente"
